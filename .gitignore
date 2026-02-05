@@ -1,0 +1,9 @@
+# Virtual environments
+myenv310/
+
+# Audio & data
+data/
+
+# Python cache
+__pycache__/
+*.pyc
