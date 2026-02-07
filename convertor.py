@@ -30,4 +30,4 @@ def convert(path: str) -> str:
     subprocess.run(command, check=True)
     print(f"Audio extracted successfully → {audio_path}")
 
-    return audio_path  # ✅ FIXED: Return the generated WAV file
+    return audio_path

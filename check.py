@@ -1,15 +1,89 @@
-import heapq
+
+import re
+from collections import Counter
+import librosa
+
 transcript = "4th February 2025. So, I just don't want to say, like, oh, I didn't do this recording before and will I do this recording after like, like I knew this. Because for the last two, last, for the past few recordings I have been saying that I will be doing this constantly and I have been talking about my plans. And it's like I've jinxed it. So, I don't want to talk about it and or I don't want to jinx it again. So, if I'm going to continue it, if I have that discipline or that motivation to continue, like, kind of, like talk daily, I'll do it. I don't want to plan this. This should be like, like a habit and it doesn't even take time. So, that's it. So, I'll be just saying about what did happen today and I'll just move on to the, like, I'll just finish this recording and I don't want to be, I don't want this recording to be even five to six minutes long. I just want to, like, seven minutes long. I just want to shorten it to five to six minutes. If I, if I have to say something more, I'll just continue. So, I don't want to measure it, but I don't want to talk long either. So, if I'm just finished up with, like, what I'm, what I have to say or if you've finished up with saying what I've done today. So, that's it for, that's it. So, I don't want to, like, have any time limit for, for every day. I just want to talk about what I've done and actually I don't think it's that. I don't want to repeat myself again and again. So, I'll just, just saying something once and after that if it wasn't conveyed properly, it's my mistake to correct it next time. Not the, I'll try to correct it the next sentence or right now and I'm saying it. That's one thing because I'm saying something and correcting it on the, on the exact time. It just, it just feels like that I'm repeatedly saying the same thing for even two to three minutes. So, I just don't want to do that. And, okay, let me tell about my day and it was as usual and actually we have to, like, our ML team has to present a PPT and I'm their leader. So, I don't want to, like, for the leaders, there is just one job that is to convey the introduction, like, say the introduction and conclusion and all the, all the other contents my team mates have to speak. So, I don't have much thing to do but even though I haven't had much thing, I couldn't able to do it because my team was in the center. I was there and one of my team members was there and other three were, was coming, coming and one of them came after that's I went. So, we couldn't able to present it today. Only one team, my girlfriend team presented it and after that, she said that we will be doing this presentation tomorrow. So, I don't know, my team mates will come on the right time tomorrow as well. So, I'll say what have happened there and actually one of the main things that motivated our, that slab right in my face to do this, is that I was sitting in the morning, like, before the PDD even starts, I was tensed. At that time, I didn't know that I should just be speaking the introduction and conclusion. I thought I'll be speaking one of, one of two slides and I thought I'm going to stuck there, I'm going to stand like an idiot at some point and I'll be just feeling that if I've done this recording daily, I could have been talked much better and it could have been much nicer and I could have been even motivated to do some more progress and some more new things to upskill my career, upskill myself. So, that's one thing that motivated me to talk today. So, I just want some daily motivation to talk daily. So, I don't want to run on the same motivation. So, that's one thing. It's even if that one single day's motivation carried me, carried my recordings for even a week, I don't care about it until I'm speaking. I'm recording it regularly. So, that's one thing that happened and after that it was just full of normal YBD, normal YBD and after that I actually have gone to my sister's house. She had shifted her house to Gullwanger itself. So, it's near like, it's only 50 meters apart from my grandmother's house and it's very easy to travel. So, I went to my grandmother's house and I walked there. So, I spent my evening and night there. So, I just came after eating, I picked up my mom and came and after that we ate and we left. So, that's it, that's it for the day I think and after this, after I came home I had, I talked to my girlfriend and then that's it, I'm recording it. So, this happened and then I'm going to sleep and I will just see what happened tomorrow in the next recording, I guess."
+TOP_K = 5
+audio_duration_sec = librosa.get_duration(y=y, sr=sr)
 
-frequentWords = []
-words = transcript.split()
-wordDict = {}
+# ----------------------------
+# WORD CATEGORIES
+# ----------------------------
+WORD_CATEGORIES = {
+    "Self references": {
+        "i", "my", "me", "myself", "mine", "we", "us", "our", "ours"
+    },
+    "Connectors": {
+        "so", "and", "but", "because", "however", "therefore", "also", 
+        "moreover", "furthermore", "yet", "though", "although", "or", "nor"
+    },
+    "Action verbs": {
+        "do", "make", "go", "work", "take", "get", "give", "use", "try",
+        "start", "stop", "create", "build", "run", "move", "speak", "talk"
+    },
+    "Emotion words": {
+        "feel", "bad", "good", "nervous", "confident", "happy", "sad",
+        "angry", "excited", "afraid", "worried", "anxious", "proud", "love", "hate"
+    },
+    "Planning words": {
+        "goal", "want", "try", "plan", "will", "would", "should", "need",
+        "hope", "wish", "aim", "intend", "strategy", "future"
+    }
+}
 
-for word in words:
-    wordDict[word.lower()] = wordDict.get(word.lower(), 0) + 1
+# ----------------------------
+# WORD COUNT (CLEAN)
+# ----------------------------
+# remove punctuation
+clean_words = re.findall(r"\b[a-zA-Z']+\b", transcript.lower())
 
-countsDict = [(-value, key) for key, value in wordDict.items()]
-heapq.heapify(countsDict)
+word_counts = Counter(clean_words)
+top_words = word_counts.most_common(TOP_K)
 
-for _ in range(5):
-    print(heapq.heappop(countsDict))
+# ----------------------------
+# WORD CATEGORY BREAKDOWN
+# ----------------------------
+category_counts = {category: 0 for category in WORD_CATEGORIES}
+
+for word in clean_words:
+    for category, word_set in WORD_CATEGORIES.items():
+        if word in word_set:
+            category_counts[category] += 1
+
+# ----------------------------
+# FLUENCY METRICS (approx)
+# ----------------------------
+total_words = len(clean_words)
+wpm = (total_words / audio_duration_sec) * 60 if audio_duration_sec > 0 else 0
+
+# ----------------------------
+# OUTPUT
+# ----------------------------
+print("\n==============================")
+print("TRANSCRIPT")
+print("==============================")
+print(transcript)
+
+print("\n==============================")
+print("TOP USED WORDS")
+print("==============================")
+for word, count in top_words:
+    print(f"{word:>10} : {count}")
+
+print("\n==============================")
+print("WORD CATEGORY BREAKDOWN")
+print("==============================")
+if total_words > 0:
+    for category, count in category_counts.items():
+        percentage = (count / total_words) * 100
+        print(f"- {category:<20} : {count:3d} words ({percentage:5.1f}%)")
+else:
+    print("No words detected in transcript.")
+
+print("\n==============================")
+print("FLUENCY METRICS")
+print("==============================")
+print(f"Audio duration      : {audio_duration_sec:.2f} sec")
+print(f"Total words         : {total_words}")
+print(f"Words per minute    : {wpm:.2f}")

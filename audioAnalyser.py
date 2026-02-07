@@ -16,6 +16,31 @@ MODEL_SIZE = "small"
 TOP_K = 5
 
 # ----------------------------
+# WORD CATEGORIES
+# ----------------------------
+WORD_CATEGORIES = {
+    "Self references": {
+        "i", "my", "me", "myself", "mine", "we", "us", "our", "ours"
+    },
+    "Connectors": {
+        "so", "and", "but", "because", "however", "therefore", "also", 
+        "moreover", "furthermore", "yet", "though", "although", "or", "nor"
+    },
+    "Action verbs": {
+        "do", "make", "go", "work", "take", "get", "give", "use", "try",
+        "start", "stop", "create", "build", "run", "move", "speak", "talk"
+    },
+    "Emotion words": {
+        "feel", "bad", "good", "nervous", "confident", "happy", "sad",
+        "angry", "excited", "afraid", "worried", "anxious", "proud", "love", "hate"
+    },
+    "Planning words": {
+        "goal", "want", "try", "plan", "will", "would", "should", "need",
+        "hope", "wish", "aim", "intend", "strategy", "future"
+    }
+}
+
+# ----------------------------
 # ENSURE AUDIO EXISTS
 # ----------------------------
 if not os.path.exists(AUDIO_PATH):
@@ -76,6 +101,16 @@ word_counts = Counter(clean_words)
 top_words = word_counts.most_common(TOP_K)
 
 # ----------------------------
+# WORD CATEGORY BREAKDOWN
+# ----------------------------
+category_counts = {category: 0 for category in WORD_CATEGORIES}
+
+for word in clean_words:
+    for category, word_set in WORD_CATEGORIES.items():
+        if word in word_set:
+            category_counts[category] += 1
+
+# ----------------------------
 # FLUENCY METRICS (approx)
 # ----------------------------
 total_words = len(clean_words)
@@ -94,6 +129,16 @@ print("TOP USED WORDS")
 print("==============================")
 for word, count in top_words:
     print(f"{word:>10} : {count}")
+
+print("\n==============================")
+print("WORD CATEGORY BREAKDOWN")
+print("==============================")
+if total_words > 0:
+    for category, count in category_counts.items():
+        percentage = (count / total_words) * 100
+        print(f"- {category:<20} : {count:3d} words ({percentage:5.1f}%)")
+else:
+    print("No words detected in transcript.")
 
 print("\n==============================")
 print("FLUENCY METRICS")
