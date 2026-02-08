@@ -16,6 +16,7 @@ MODEL_SIZE = "small"
 
 TOP_K = 5
 LONG_SENTENCE_THRESHOLD = 25
+TOP_PHRASES = 5
 
 # ----------------------------
 # WORD CATEGORIES
@@ -41,6 +42,9 @@ WORD_CATEGORIES = {
         "hope", "wish", "aim", "intend", "strategy", "future"
     }
 }
+
+# Filler words for confidence tracking
+FILLER_WORDS = {"so", "like", "um", "uh", "you know", "i mean", "kind of", "sort of"}
 
 def transcribe_and_analyze():
     # ----------------------------
@@ -134,6 +138,29 @@ def print_analysis(transcript, audio_duration_sec):
     long_sentence_count = sum(1 for length in sentence_lengths if length > LONG_SENTENCE_THRESHOLD)
     long_sentence_percentage = (long_sentence_count / num_sentences * 100) if num_sentences > 0 else 0
 
+    # ----------------------------
+    # REPETITION INTENSITY ANALYSIS
+    # ----------------------------
+    total_words = len(clean_words)
+    unique_words = len(set(clean_words))
+    repetition_ratio = unique_words / total_words if total_words > 0 else 0
+
+    # Generate n-grams (2-word and 3-word phrases)
+    # Keep original casing for phrases by using transcript words
+    transcript_words = re.findall(r"\b[a-zA-Z']+\b", transcript)
+
+    # Bigrams (2-word phrases)
+    bigrams = [" ".join(transcript_words[i:i+2]) for i in range(len(transcript_words) - 1)]
+    bigram_counts = Counter(bigrams)
+    # Filter out phrases that appear only once
+    top_bigrams = [(phrase, count) for phrase, count in bigram_counts.most_common(TOP_PHRASES * 2) if count > 1][:TOP_PHRASES]
+
+    # Trigrams (3-word phrases)
+    trigrams = [" ".join(transcript_words[i:i+3]) for i in range(len(transcript_words) - 2)]
+    trigram_counts = Counter(trigrams)
+    # Filter out phrases that appear only once
+    top_trigrams = [(phrase, count) for phrase, count in trigram_counts.most_common(TOP_PHRASES * 2) if count > 1][:TOP_PHRASES]
+
 
     # ----------------------------
     # FLUENCY METRICS (approx)
@@ -144,10 +171,10 @@ def print_analysis(transcript, audio_duration_sec):
     # ----------------------------
     # OUTPUT
     # ----------------------------
-    print("\n==============================")
-    print("TRANSCRIPT")
-    print("==============================")
-    print(transcript)
+    # print("\n==============================")
+    # print("TRANSCRIPT")
+    # print("==============================")
+    # print(transcript)
 
     print("\n==============================")
     print("TOP USED WORDS")
@@ -178,6 +205,29 @@ def print_analysis(transcript, audio_duration_sec):
             print(f"  \"{longest_sentence[:150]}{'...' if len(longest_sentence) > 150 else ''}\"")
     else:
         print("No sentences detected in transcript.")
+
+    print("\n==============================")
+    print("VOCABULARY & REPETITION")
+    print("==============================")
+    print(f"- Total words               : {total_words}")
+    print(f"- Unique words              : {unique_words}")
+    print(f"- Repetition ratio          : {repetition_ratio:.2f}")
+    print(f"  (Higher = more diverse vocabulary)")
+
+    if top_bigrams or top_trigrams:
+        print("\nRepeated phrases:")
+        
+        if top_trigrams:
+            print("  3-word phrases:")
+            for phrase, count in top_trigrams:
+                print(f"    \"{phrase}\" ({count})")
+        
+        if top_bigrams:
+            print("  2-word phrases:")
+            for phrase, count in top_bigrams:
+                print(f"    \"{phrase}\" ({count})")
+    else:
+        print("\nNo repeated phrases detected.")
 
     print("\n==============================")
     print("FLUENCY METRICS")
