@@ -1,19 +1,21 @@
+"""
+Entry point for audio analysis.
+"""
+
 import os
-from audio_analyser import audioAnalyser
+from audio_analyser import main
 
 BASE_PATH = "data/"
-AUDIO_FILENAME = "audio2.wav"
+AUDIO_FILENAME = "audio1.wav"
 
 if __name__ == "__main__":
-    analysisJson = audioAnalyser.main(
-        BASE_PATH=BASE_PATH,
-        AUDIO_FILENAME=AUDIO_FILENAME,
-        MODEL_SIZE="small",
-        TOP_K=5,
-        LONG_SENTENCE_THRESHOLD=25,
-        TOP_PHRASES=5,
-        return_json=True
+    main(
+        base_path=BASE_PATH,
+        audio_filename=AUDIO_FILENAME,
+        model_size="small",
+        top_k=5,
+        long_sentence_threshold=25,
+        top_phrases=5,
+        return_json=False,
+        save_json=True
     )
-
-    print("Analysis completed successfully.")
-    print(analysisJson)
