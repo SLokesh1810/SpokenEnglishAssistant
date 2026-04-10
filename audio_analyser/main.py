@@ -13,112 +13,13 @@ from .config import (
     DEFAULT_LONG_SENTENCE_THRESHOLD,
     DEFAULT_TOP_PHRASES
 )
-from .text_processing import clean_text
-from .word_analysis import categorize_words, get_top_words
-from .sentence_analysis import analyze_sentences
-from .repetition_analysis import analyze_repetition
-from .fluency_analysis import calculate_fluency
-from .filler_analysis import analyze_filler_usage
-from .drift_analysis import analyze_confidence_drift
+
+from .pause_analysis import analyze_pauses
+from .pipeline import analyze_transcript
 from .transcription import transcribe_audio, save_transcript, load_transcript, verify_transcript_integrity
 from .output import print_analysis_results, save_json as save_json_output
 
-def analyze_transcript(transcript, audio_duration_sec, top_k, long_sentence_threshold, top_phrases):
-    """
-    Perform all analysis steps on the transcript.
-    
-    Args:
-        transcript (str): Transcript text
-        audio_duration_sec (float): Audio duration in seconds
-        top_k (int): Number of top words to extract
-        long_sentence_threshold (int): Threshold for long sentences
-        top_phrases (int): Number of top repeated phrases
-    
-    Returns:
-        dict: Complete analysis results
-    """
-    print("\n🔍 Starting analysis...")
-    
-    # Clean words
-    print("  ➤ Cleaning text and extracting words...")
-    clean_words = clean_text(transcript)
 
-    # Word analysis
-    print("  ➤ Analyzing word frequencies and categories...")
-    top_words = get_top_words(clean_words, top_k)
-    category_counts = categorize_words(clean_words)
-
-    # Sentence analysis
-    print("  ➤ Analyzing sentence structure...")
-    (num_sentences, avg_sentence_length, longest_sentence, 
-     longest_length, long_sentence_count, long_sentence_percentage) = analyze_sentences(
-        transcript, long_sentence_threshold
-    )
-
-    # Repetition analysis
-    print("  ➤ Analyzing vocabulary repetition...")
-    unique_words, repetition_ratio, top_bigrams, top_trigrams = analyze_repetition(
-        clean_words, transcript, top_phrases
-    )
-
-    # Fluency metrics
-    print("  ➤ Calculating fluency metrics...")
-    total_words, wpm = calculate_fluency(clean_words, audio_duration_sec)
-
-    # Filler analysis
-    print("  ➤ Analyzing filler words and phrases...")
-    filler_results = analyze_filler_usage(clean_words, transcript)
-
-    # Confidence drift
-    print("  ➤ Analyzing confidence drift over time...")
-    drift_data = analyze_confidence_drift(transcript, total_words, audio_duration_sec)
-
-    print("  ✓ Analysis complete!\n")
-
-    # Build results
-    analysis_results = {
-        "audio_info": {
-            "duration_seconds": round(audio_duration_sec, 2),
-            "total_words": total_words,
-            "words_per_minute": round(wpm, 2)
-        },
-        "top_words": [
-            {"word": word, "count": count} for word, count in top_words
-        ],
-        "word_categories": {
-            category: {
-                "count": count,
-                "percentage": round((count / total_words * 100), 1) if total_words > 0 else 0
-            }
-            for category, count in category_counts.items()
-        },
-        "sentence_analysis": {
-            "total_sentences": num_sentences,
-            "avg_sentence_length": round(avg_sentence_length, 1),
-            "longest_sentence_length": longest_length,
-            "longest_sentence_preview": longest_sentence[:150] + ("..." if len(longest_sentence) > 150 else ""),
-            "long_sentences": {
-                "count": long_sentence_count,
-                "percentage": round(long_sentence_percentage, 1),
-                "threshold": long_sentence_threshold
-            }
-        },
-        "vocabulary": {
-            "total_words": total_words,
-            "unique_words": unique_words,
-            "repetition_ratio": round(repetition_ratio, 2),
-            "repeated_trigrams": [
-                {"phrase": phrase, "count": count} for phrase, count in top_trigrams
-            ],
-            "repeated_bigrams": [
-                {"phrase": phrase, "count": count} for phrase, count in top_bigrams
-            ]
-        },
-        "filler_analysis": filler_results,
-        "confidence_drift": drift_data
-    }
-
-    return analysis_results
 
 def main(base_path, audio_filename, 
          model_size=DEFAULT_MODEL_SIZE, 
@@ -162,6 +63,7 @@ def main(base_path, audio_filename,
     print(f"\n🎵 Loading audio file...")
     audio_array, sr = librosa.load(audio_path, sr=16000)
     audio_duration_sec = librosa.get_duration(y=audio_array, sr=sr)
+    pause_data = analyze_pauses(audio_path)
     print(f"  ✓ Audio loaded: {audio_duration_sec:.2f} seconds")
 
     # Check for existing transcript
@@ -194,7 +96,8 @@ def main(base_path, audio_filename,
         audio_duration_sec, 
         top_k, 
         long_sentence_threshold, 
-        top_phrases
+        top_phrases,
+        pause_data
     )
 
     # Output

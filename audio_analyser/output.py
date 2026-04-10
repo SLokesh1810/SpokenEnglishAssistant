@@ -107,8 +107,26 @@ def print_analysis_results(analysis_results):
         if sentence_analysis['longest_sentence_preview']:
             print(f"\nLongest sentence preview:")
             print(f"  \"{sentence_analysis['longest_sentence_preview']}\"")
+            
+        raw_issues = sentence_analysis.get("raw_speech_issues")
+
+        if raw_issues:
+            print("\nRaw Speech Issues:")
+            print(f"- Max sentence length       : {raw_issues['max_sentence_length']}")
+            print(f"- Very long sentences (>40) : {raw_issues['very_long_sentences']}")
     else:
         print("No sentences detected in transcript.")
+
+    print("\n==============================")
+    print("PAUSE ANALYSIS")
+    print("==============================")
+
+    pause = analysis_results.get("pause_analysis")
+
+    if pause:
+        print(f"- Total pauses          : {pause['total_pauses']}")
+        print(f"- Long pauses (>1.5s)   : {pause['long_pauses']}")
+        print(f"- Avg pause duration    : {pause['avg_pause_duration']} sec")
 
     print("\n==============================")
     print("VOCABULARY & REPETITION")
@@ -166,6 +184,27 @@ def print_analysis_results(analysis_results):
     print(f"Audio duration      : {audio_info['duration_seconds']:.2f} sec")
     print(f"Total words         : {audio_info['total_words']}")
     print(f"Words per minute    : {audio_info['words_per_minute']:.2f}")
+
+    print("\n==============================")
+    print("SPEAKING SCORE")
+    print("==============================")
+
+    score = analysis_results.get("score")
+
+    if score:
+        print(f"- Fluency     : {score['fluency']}/10")
+        print(f"- Confidence  : {score['confidence']}/10")
+        print(f"- Clarity     : {score['clarity']}/10")
+        print(f"- Overall     : {score['overall']}/10")
+
+    print("\n==============================")
+    print("AI FEEDBACK")
+    print("==============================")
+
+    feedback = analysis_results.get("feedback", [])
+
+    for f in feedback:
+        print(f"- {f}")
 
 def save_json(analysis_results, base_path, audio_filename):
     """

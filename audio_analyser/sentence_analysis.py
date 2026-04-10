@@ -4,39 +4,76 @@ Sentence structure and length analysis.
 
 import re
 from .config import SENTENCE_PATTERN, WORD_PATTERN
+from .text_processing import clean_text
 
-def analyze_sentences(transcript, long_sentence_threshold=25):
+def analyze_raw_sentences(transcript):
     """
-    Analyze sentence structure and length.
-    
-    Args:
-        transcript (str): Full transcript text
-        long_sentence_threshold (int): Word count threshold for long sentences
-    
-    Returns:
-        tuple: (num_sentences, avg_length, longest_sentence, longest_length, 
-                long_count, long_percentage)
+    Detect natural speech issues without artificial splitting.
     """
-    sentences = SENTENCE_PATTERN.split(transcript)
-    sentences = [s.strip() for s in sentences if s.strip()]
+    import re
+    from .config import WORD_PATTERN
 
-    sentence_lengths = []
-    longest_sentence = ""
-    longest_length = 0
+    # naive split (still useful for detection)
+    rough_sentences = re.split(r'[.!?]+', transcript)
+    rough_sentences = [s.strip() for s in rough_sentences if s.strip()]
 
-    for sentence in sentences:
-        words_in_sentence = WORD_PATTERN.findall(sentence)
-        length = len(words_in_sentence)
-        sentence_lengths.append(length)
-        
-        if length > longest_length:
-            longest_length = length
-            longest_sentence = sentence
+    lengths = [len(WORD_PATTERN.findall(s)) for s in rough_sentences]
+
+    if not lengths:
+        return {
+            "max_sentence_length": 0,
+            "very_long_sentences": 0
+        }
+
+    return {
+        "max_sentence_length": max(lengths),
+        "very_long_sentences": sum(1 for l in lengths if l > 40)
+    }
+
+def split_into_sentences_by_length(words, max_len=20):
+    """
+    Split words into pseudo-sentences based on length.
+    Acts as fallback when punctuation is unreliable.
+    """
+    sentences = []
+    current = []
+
+    for word in words:
+        current.append(word)
+        if len(current) >= max_len:
+            sentences.append(current)
+            current = []
+
+    if current:
+        sentences.append(current)
+
+    return sentences
+
+def analyze_sentences(words, long_sentence_threshold=25):
+
+    # Use chunk-based splitting instead of punctuation
+    sentences = split_into_sentences_by_length(words, max_len=20)
+
+    sentence_lengths = [len(s) for s in sentences]
 
     num_sentences = len(sentence_lengths)
     avg_sentence_length = sum(sentence_lengths) / num_sentences if num_sentences > 0 else 0
-    long_sentence_count = sum(1 for length in sentence_lengths if length > long_sentence_threshold)
+
+    longest_length = max(sentence_lengths) if sentence_lengths else 0
+
+    # Reconstruct longest sentence for preview
+    longest_sentence = ""
+    if sentences:
+        longest_sentence = " ".join(max(sentences, key=len))
+
+    long_sentence_count = sum(1 for l in sentence_lengths if l > long_sentence_threshold)
     long_sentence_percentage = (long_sentence_count / num_sentences * 100) if num_sentences > 0 else 0
 
-    return (num_sentences, avg_sentence_length, longest_sentence, 
-            longest_length, long_sentence_count, long_sentence_percentage)
+    return (
+        num_sentences,
+        avg_sentence_length,
+        longest_sentence,
+        longest_length,
+        long_sentence_count,
+        long_sentence_percentage
+    )

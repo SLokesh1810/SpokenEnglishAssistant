@@ -91,8 +91,39 @@ WORD_CATEGORIES = {
         "i think", "i guess",
         "i feel", "i believe",
         "i mean"
+    },
+    "Discourse markers": {
+        "so", "well", "okay", "right",
+        "basically", "actually",
+        "you know", "i mean",
+        "like", "anyway",
+        "by the way"
+    },
+    "Weak language (confidence killers)": {
+        "maybe", "probably",
+        "actually", "basically",
+        "kind", "sort", "kinda", "sorta",
+        "almost", "somewhat",
+        "just", "like",
+        "i think", "i guess",
+        "i feel", "i believe",
+        "i mean",
+        "i'm not sure",
+        "i don't know",
+        "i guess so",
+        "i think so"
+    },
+    "Professional language": {
+        "specifically", "particularly",
+        "for example", "for instance",
+        "in conclusion", "overall",
+        "in summary", "primarily",
+        "effectively", "efficiently",
+        "significantly", "notably"
     }
 }
+
+
 
 # ----------------------------
 # FILLER WORDS AND PHRASES
@@ -103,7 +134,8 @@ FILLER_WORDS = {
     "well", "okay", "right",
     "basically", "actually",
     "literally", "honestly",
-    "just"
+    "just",
+    "hmm", "huh"
 }
 
 FILLER_PHRASES = {
@@ -113,8 +145,12 @@ FILLER_PHRASES = {
     "sort of",
     "i guess",
     "i think",
-    "what to say",
-    "how to say",
+    "i feel like",
+    "i don't know",
+    "you see",
+    "let me think",
+    "how do i say",
+    "what i mean is",
     "at the end of the day",
     "to be honest",
     "to be frank"
