@@ -198,13 +198,18 @@ def print_analysis_results(analysis_results):
         print(f"- Overall     : {score['overall']}/10")
 
     print("\n==============================")
-    print("AI FEEDBACK")
+    print("FEEDBACK")
     print("==============================")
 
-    feedback = analysis_results.get("feedback", [])
+    fb = analysis_results.get("feedback", {})
 
-    for f in feedback:
-        print(f"- {f}")
+    print("\nTop Issues:")
+    for i, issue in enumerate(fb.get("issues", []), 1):
+        print(f"{i}. ❌ {issue}")
+
+    print("\nStrengths:")
+    for s in fb.get("strengths", []):
+        print(f"- ✅ {s}")
 
 def save_json(analysis_results, base_path, audio_filename):
     """

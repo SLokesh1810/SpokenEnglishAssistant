@@ -1,5 +1,6 @@
 def generate_feedback(results):
-    feedback = []
+    issues = []
+    strengths = []
 
     wpm = results["audio_info"]["words_per_minute"]
     filler = results["filler_analysis"]["total_fillers"]["per_100_words"]
@@ -7,42 +8,66 @@ def generate_feedback(results):
     avg_len = results["sentence_analysis"]["avg_sentence_length"]
     raw = results["sentence_analysis"]["raw_speech_issues"]
 
-    # 🔹 Fluency
+    # -------------------------
+    # FLUENCY
+    # -------------------------
     if wpm < 110:
-        feedback.append("⚠️ You are speaking too slowly. Try to increase your pace.")
+        issues.append(("Low speaking speed", 2, "Try increasing your pace."))
     elif wpm > 160:
-        feedback.append("⚠️ You are speaking too fast. Slow down for better clarity.")
+        issues.append(("Too fast speaking", 2, "Slow down for clarity."))
     else:
-        feedback.append("✅ Your speaking pace is good.")
+        strengths.append("Good speaking pace")
 
-    # 🔹 Fillers
-    if filler > 7:
-        feedback.append("❌ You use too many filler words. Try pausing instead of saying 'um', 'like'.")
-    elif filler > 4:
-        feedback.append("⚠️ Moderate filler usage. Try to reduce it.")
+    # -------------------------
+    # FILLERS
+    # -------------------------
+    if filler > 8:
+        issues.append(("High filler usage", 3, "Pause instead of using filler words."))
+    elif filler > 5:
+        issues.append(("Moderate filler usage", 2, "Reduce fillers for better clarity."))
     else:
-        feedback.append("✅ Good control over filler words.")
+        strengths.append("Good control over filler words")
 
-    # 🔹 Vocabulary
-    if repetition < 0.35:
-        feedback.append("❌ Low vocabulary diversity. Try using more varied words.")
+    # -------------------------
+    # VOCABULARY
+    # -------------------------
+    if repetition < 0.3:
+        issues.append(("Low vocabulary diversity", 3, "Use more varied words."))
     elif repetition < 0.5:
-        feedback.append("⚠️ Moderate vocabulary usage. Can improve.")
+        issues.append(("Moderate vocabulary diversity", 2, "Try improving word variety."))
     else:
-        feedback.append("✅ Good vocabulary diversity.")
+        strengths.append("Good vocabulary usage")
 
-    # 🔹 Sentence flow
+    # -------------------------
+    # SENTENCE STRUCTURE
+    # -------------------------
     if avg_len > 25:
-        feedback.append("⚠️ Your sentences are too long. Break them into smaller ones.")
+        issues.append(("Very long sentences", 2, "Break sentences into smaller parts."))
     elif avg_len < 10:
-        feedback.append("⚠️ Your sentences are too short. Try forming complete thoughts.")
+        issues.append(("Very short sentences", 1, "Try forming complete thoughts."))
     else:
-        feedback.append("✅ Good sentence structure.")
+        strengths.append("Good sentence structure")
 
-    # 🔹 Rambling detection
-    if raw["max_sentence_length"] > 80:
-        feedback.append("❌ You tend to ramble without pauses. Try structuring your thoughts better.")
-    elif raw["max_sentence_length"] > 40:
-        feedback.append("⚠️ Some long unbroken speech detected.")
-    
-    return feedback
+    # -------------------------
+    # RAMBLING
+    # -------------------------
+    if raw["max_sentence_length"] > 100:
+        issues.append(("Excessive rambling", 3, "You speak too long without pauses."))
+    elif raw["max_sentence_length"] > 50:
+        issues.append(("Some rambling detected", 2, "Try structuring your thoughts."))
+
+    # -------------------------
+    # SORT ISSUES BY SEVERITY
+    # -------------------------
+    issues.sort(key=lambda x: x[1], reverse=True)
+
+    # Format nicely
+    formatted_issues = [
+        f"{title} ({'CRITICAL' if sev==3 else 'HIGH' if sev==2 else 'LOW'}) - {msg}"
+        for title, sev, msg in issues
+    ]
+
+    return {
+        "issues": formatted_issues[:3],   # top 3
+        "strengths": strengths
+    }

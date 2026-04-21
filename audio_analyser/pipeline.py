@@ -129,7 +129,6 @@ def analyze_transcript(transcript, audio_duration_sec, top_k, long_sentence_thre
         },
     }
 
-    feedback = generate_feedback(analysis_results)
-    analysis_results["feedback"] = feedback
+    analysis_results["feedback"] = generate_feedback(analysis_results)
 
     return analysis_results
